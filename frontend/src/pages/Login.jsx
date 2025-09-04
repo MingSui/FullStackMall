@@ -1,14 +1,17 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { authAPI } from '../services/apiService'
 
 const Login = () => {
   const [formData, setFormData] = useState({
-    username: '',
+    email: '',
     password: ''
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const navigate = useNavigate()
+  const location = useLocation()
+  const from = location.state?.from?.pathname || '/'
 
   const handleChange = (e) => {
     setFormData({
@@ -23,13 +26,32 @@ const Login = () => {
     setError('')
 
     try {
-      // TODO: 实现API调用
-      console.log('登录数据:', formData)
-      // 模拟登录成功
-      localStorage.setItem('token', 'mock-jwt-token')
-      navigate('/')
+      const response = await authAPI.login(formData)
+      
+      if (response.data.success) {
+        const { token, user } = response.data.data
+        localStorage.setItem('token', token)
+        localStorage.setItem('user', JSON.stringify(user))
+        
+        // 跳转到之前访问的页面或首页
+        navigate(from, { replace: true })
+      } else {
+        setError(response.data.message || '登录失败')
+      }
     } catch (err) {
-      setError('登录失败，请检查用户名和密码')
+      console.error('登录错误:', err)
+      if (err.response?.data?.error) {
+        const { code, message } = err.response.data.error
+        if (code === 'INVALID_CREDENTIALS') {
+          setError('邮箱或密码错误')
+        } else if (code === 'USER_NOT_FOUND') {
+          setError('用户不存在，请检查邮箱地址')
+        } else {
+          setError(message || '登录失败，请稍后再试')
+        }
+      } else {
+        setError('网络错误，请检查网络连接后重试')
+      }
     } finally {
       setLoading(false)
     }
@@ -49,13 +71,14 @@ const Login = () => {
 
           <form onSubmit={handleSubmit}>
             <div className="mb-4">
-              <label className="form-label">用户名</label>
+              <label className="form-label">邮箱</label>
               <input
-                type="text"
-                name="username"
-                value={formData.username}
+                type="email"
+                name="email"
+                value={formData.email}
                 onChange={handleChange}
                 className="form-input"
+                placeholder="请输入邮箱地址"
                 required
               />
             </div>
@@ -68,6 +91,7 @@ const Login = () => {
                 value={formData.password}
                 onChange={handleChange}
                 className="form-input"
+                placeholder="请输入密码"
                 required
               />
             </div>

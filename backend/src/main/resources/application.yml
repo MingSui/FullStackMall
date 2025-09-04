@@ -4,7 +4,7 @@ spring:
   
   # 数据源配置
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/fullstackmall?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://127.0.0.1:3306/fullstackmall?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
     username: ${SPRING_DATASOURCE_USERNAME:root}
     password: ${SPRING_DATASOURCE_PASSWORD:rootpassword}
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -43,19 +43,54 @@ logging:
   pattern:
     console: '%d{yyyy-MM-dd HH:mm:ss} - %msg%n'
 
-# Swagger/OpenAPI配置
+# Knife4j API文档配置
+knife4j:
+  enable: true
+  setting:
+    language: zh_cn
+    enable-version: true
+    enable-reload-cache-parameter: false
+    enable-after-script: true
+    enable-filter-multipart-apis: false
+    enable-filter-multipart-api-method-type: POST
+    enable-request-cache: true
+    enable-host: false
+    enable-host-text: 
+    enable-home-custom: true
+    home-custom-path: classpath:markdown/home.md
+    enable-search: true
+    enable-footer: false
+    enable-footer-custom: true
+    footer-custom-content: Apache License 2.0 | Copyright  2024 FullStackMall
+    enable-dynamic-parameter: false
+    enable-debug: true
+    enable-open-api: false
+    enable-group: true
+  cors: true
+  production: false
+  basic:
+    enable: false
+    username: admin
+    password: 123321
+
+# SpringDoc配置（Knife4j基于此）
 springdoc:
   api-docs:
-    path: /api-docs
+    path: /v3/api-docs
+    enabled: true
   swagger-ui:
-    path: /swagger-ui.html
+    enabled: false
+  show-actuator: true
+  writer-with-default-pretty-printer: true
+  default-consumes-media-type: application/json
+  default-produces-media-type: application/json
 
 # Actuator配置（健康检查）
 management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,mappings
   endpoint:
     health:
       show-details: when-authorized

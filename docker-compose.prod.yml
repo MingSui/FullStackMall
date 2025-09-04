@@ -1,0 +1,176 @@
+version: '3.8'
+
+services:
+  # MySQL 数据库 - 生产环境配置
+  mysql:
+    image: mysql:8.0
+    container_name: fullstackmall-mysql-prod
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-your_secure_root_password}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-fullstackmall}
+      MYSQL_USER: ${MYSQL_USER:-fullstackmall_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-your_secure_password}
+    ports:
+      - "127.0.0.1:3306:3306"  # 仅本地访问
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./mysql-config/my.cnf:/etc/mysql/conf.d/my.cnf:ro
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - mysql_logs:/var/log/mysql
+    networks:
+      - fullstackmall-network
+    command: --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+      interval: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+
+  # Spring Boot 后端 - 生产环境配置
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    container_name: fullstackmall-backend-prod
+    restart: always
+    environment:
+      SPRING_PROFILES_ACTIVE: production
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE:-fullstackmall}?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER:-fullstackmall_user}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD:-your_secure_password}
+      JWT_SECRET: ${JWT_SECRET:-your_very_secure_jwt_secret_key_for_production}
+      JAVA_OPTS: -Xms512m -Xmx2g -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -Dspring.profiles.active=production
+    ports:
+      - "127.0.0.1:8080:8080"  # 仅本地访问
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - fullstackmall-network
+    volumes:
+      - backend_logs:/app/logs
+      - /etc/localtime:/etc/localtime:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 3G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+
+  # React 前端 - 生产环境配置
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+    container_name: fullstackmall-frontend-prod
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - backend
+    networks:
+      - fullstackmall-network
+    volumes:
+      - ./ssl:/etc/nginx/ssl:ro  # SSL 证书目录
+      - nginx_logs:/var/log/nginx
+      - /etc/localtime:/etc/localtime:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+
+  # Redis 缓存服务
+  redis:
+    image: redis:7-alpine
+    container_name: fullstackmall-redis-prod
+    restart: always
+    command: redis-server --requirepass ${REDIS_PASSWORD:-your_redis_password}
+    ports:
+      - "127.0.0.1:6379:6379"  # 仅本地访问
+    networks:
+      - fullstackmall-network
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+
+  # Nginx 负载均衡器
+  nginx-lb:
+    image: nginx:alpine
+    container_name: fullstackmall-nginx-lb
+    restart: always
+    ports:
+      - "8443:443"
+      - "8080:80"
+    volumes:
+      - ./nginx-lb/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+      - nginx_lb_logs:/var/log/nginx
+    depends_on:
+      - frontend
+    networks:
+      - fullstackmall-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+
+networks:
+  fullstackmall-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  mysql_data:
+    driver: local
+  mysql_logs:
+    driver: local
+  backend_logs:
+    driver: local
+  nginx_logs:
+    driver: local
+  nginx_lb_logs:
+    driver: local
+  redis_data:
+    driver: local

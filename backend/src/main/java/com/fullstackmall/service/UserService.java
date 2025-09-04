@@ -6,9 +6,6 @@ import com.fullstackmall.dto.RegisterRequest;
 import com.fullstackmall.entity.User;
 import com.fullstackmall.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -31,10 +28,7 @@ public class UserService implements UserDetailsService {
     
     @Autowired
     private JwtService jwtService;
-    
-    @Autowired
-    private AuthenticationManager authenticationManager;
-    
+
     /**
      * 用户注册
      * @param registerRequest 注册请求
@@ -65,29 +59,7 @@ public class UserService implements UserDetailsService {
         
         return new AuthResponse(token, new AuthResponse.UserDto(savedUser));
     }
-    
-    /**
-     * 用户登录
-     * @param loginRequest 登录请求
-     * @return 认证响应
-     */
-    public AuthResponse login(LoginRequest loginRequest) {
-        // 认证用户
-        Authentication authentication = authenticationManager.authenticate(
-            new UsernamePasswordAuthenticationToken(
-                loginRequest.getEmail(),
-                loginRequest.getPassword()
-            )
-        );
-        
-        User user = (User) authentication.getPrincipal();
-        
-        // 生成JWT令牌
-        String token = jwtService.generateToken(user);
-        
-        return new AuthResponse(token, new AuthResponse.UserDto(user));
-    }
-    
+
     /**
      * 根据ID查找用户
      * @param id 用户ID

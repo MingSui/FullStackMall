@@ -1,14 +1,21 @@
 package com.fullstackmall.dto;
 
 import com.fullstackmall.entity.User;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * 认证响应DTO
  */
+@Schema(description = "认证响应对象")
 public class AuthResponse {
     
+    @Schema(description = "JWT token", example = "eyJhbGciOiJIUzI1NiJ9...")
     private String token;
+    
+    @Schema(description = "Token类型", example = "Bearer")
     private String type = "Bearer";
+    
+    @Schema(description = "用户信息")
     private UserDto user;
     
     // 构造函数
@@ -47,10 +54,18 @@ public class AuthResponse {
     /**
      * 用户信息DTO
      */
+    @Schema(description = "用户信息对象")
     public static class UserDto {
+        @Schema(description = "用户ID", example = "1")
         private Long id;
+        
+        @Schema(description = "用户名", example = "john_doe")
         private String username;
+        
+        @Schema(description = "邮箱地址", example = "john@example.com")
         private String email;
+        
+        @Schema(description = "用户角色", example = "USER")
         private User.Role role;
         
         public UserDto() {}

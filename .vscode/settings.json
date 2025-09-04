@@ -1,3 +1,73 @@
 {
-    "java.compile.nullAnalysis.mode": "automatic"
+    // FullStackMall项目VS Code设置
+    "java.debug.settings.enableRunDebugCodeLens": true,
+    "java.debug.settings.showHex": false,
+    "java.debug.settings.showStaticVariables": true,
+    "java.debug.settings.showQualifiedNames": false,
+    "java.debug.settings.maxStringLength": 0,
+    "java.debug.settings.enableHotCodeReplace": true,
+    
+    // Maven配置
+    "java.configuration.maven.userSettings": null,
+    "maven.terminal.useJavaHome": true,
+    "maven.executable.path": "mvn",
+    
+    // 代码格式化
+    "java.format.settings.url": null,
+    "java.format.settings.profile": null,
+    "java.format.enabled": true,
+    
+    // 自动保存和格式化
+    "files.autoSave": "afterDelay",
+    "files.autoSaveDelay": 1000,
+    "editor.formatOnSave": true,
+    "editor.formatOnPaste": true,
+    
+    // Spring Boot相关
+    "spring-boot.ls.java.home": null,
+    "spring-boot.ls.java.vmargs": [],
+    
+    // 文件关联
+    "files.associations": {
+        "*.yml": "yaml",
+        "*.yaml": "yaml"
+    },
+    
+    // 排除文件
+    "files.exclude": {
+        "**/target": true,
+        "**/logs": true,
+        "**/.mvn": true
+    },
+    
+    // 搜索排除
+    "search.exclude": {
+        "**/target": true,
+        "**/logs": true,
+        "**/.mvn": true
+    },
+    
+    // 代码提示
+    "java.completion.enabled": true,
+    "java.completion.overwrite": true,
+    "java.completion.guessMethodArguments": true,
+    
+    // 错误检查
+    "java.errors.incompleteClasspath.severity": "warning",
+    
+    // Terminal设置
+    "terminal.integrated.defaultProfile.windows": "PowerShell",
+    
+    // 文件编码
+    "files.encoding": "utf8",
+    
+    // 代码导航
+    "java.references.includeDecompiledSources": true,
+    "java.navigation.includeDecompiledSources": true,
+    
+    // 代码片段
+    "java.completion.filteredTypes": [
+        "java.awt.*",
+        "com.sun.*"
+    ]
 }

@@ -1,5 +1,6 @@
 package com.fullstackmall.service;
 
+import com.fullstackmall.entity.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -36,6 +37,19 @@ public class JwtService {
     }
     
     /**
+     * 生成JWT令牌（用户特定信息）
+     * @param user 用户实体
+     * @return JWT令牌
+     */
+    public String generateToken(User user) {
+        Map<String, Object> extraClaims = new HashMap<>();
+        extraClaims.put("userId", user.getId());
+        extraClaims.put("role", user.getRole().name());
+        extraClaims.put("email", user.getEmail());
+        return generateToken(extraClaims, user);
+    }
+    
+    /**
      * 生成JWT令牌（带额外声明）
      * @param extraClaims 额外声明
      * @param userDetails 用户详情
@@ -43,6 +57,15 @@ public class JwtService {
      */
     public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
         return buildToken(extraClaims, userDetails, jwtExpiration);
+    }
+    
+    /**
+     * 生成刷新令牌（更长的过期时间）
+     * @param userDetails 用户详情
+     * @return 刷新令牌
+     */
+    public String generateRefreshToken(UserDetails userDetails) {
+        return buildToken(new HashMap<>(), userDetails, jwtExpiration * 7); // 7倍过期时间
     }
     
     /**
@@ -84,6 +107,30 @@ public class JwtService {
     }
     
     /**
+     * 检查令牌是否即将过期（在指定时间内）
+     * @param token JWT令牌
+     * @param minutesBeforeExpiry 过期前分钟数
+     * @return 是否即将过期
+     */
+    public boolean isTokenExpiringWithin(String token, long minutesBeforeExpiry) {
+        Date expiration = extractExpiration(token);
+        Date now = new Date();
+        Date threshold = new Date(now.getTime() + (minutesBeforeExpiry * 60 * 1000));
+        return expiration.before(threshold);
+    }
+    
+    /**
+     * 获取令牌剩余有效时间（毫秒）
+     * @param token JWT令牌
+     * @return 剩余有效时间
+     */
+    public long getTokenRemainingTime(String token) {
+        Date expiration = extractExpiration(token);
+        Date now = new Date();
+        return Math.max(0, expiration.getTime() - now.getTime());
+    }
+    
+    /**
      * 提取过期时间
      * @param token JWT令牌
      * @return 过期时间
@@ -99,6 +146,36 @@ public class JwtService {
      */
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
+    }
+    
+    /**
+     * 从令牌中提取用户ID
+     * @param token JWT令牌
+     * @return 用户ID
+     */
+    public Long extractUserId(String token) {
+        return extractClaim(token, claims -> {
+            Object userId = claims.get("userId");
+            return userId != null ? Long.valueOf(userId.toString()) : null;
+        });
+    }
+    
+    /**
+     * 从令牌中提取用户角色
+     * @param token JWT令牌
+     * @return 用户角色
+     */
+    public String extractUserRole(String token) {
+        return extractClaim(token, claims -> (String) claims.get("role"));
+    }
+    
+    /**
+     * 从令牌中提取用户邮箱
+     * @param token JWT令牌
+     * @return 用户邮箱
+     */
+    public String extractUserEmail(String token) {
+        return extractClaim(token, claims -> (String) claims.get("email"));
     }
     
     /**
@@ -131,7 +208,27 @@ public class JwtService {
      * @return 签名密钥
      */
     private Key getSignInKey() {
-        byte[] keyBytes = secretKey.getBytes();
+        // 确保密钥长度足够（至少256位）
+        String key = secretKey;
+        if (key.length() < 32) {
+            // 如果密钥太短，进行填充
+            key = key + "0".repeat(32 - key.length());
+        }
+        byte[] keyBytes = key.getBytes();
         return Keys.hmacShaKeyFor(keyBytes);
+    }
+    
+    /**
+     * 验证令牌格式
+     * @param token JWT令牌
+     * @return 是否为有效格式
+     */
+    public boolean isValidTokenFormat(String token) {
+        if (token == null || token.isEmpty()) {
+            return false;
+        }
+        // JWT令牌应该包含两个点，分为三部分
+        String[] parts = token.split("\\.");
+        return parts.length == 3;
     }
 }

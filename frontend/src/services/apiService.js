@@ -20,9 +20,10 @@ export const authAPI = {
 
 // 商品相关API
 export const productAPI = {
-  // 获取所有商品
-  getProducts: () => {
-    return api.get('/products')
+  // 获取商品列表（分页）
+  getProducts: (params = {}) => {
+    const { page = 0, size = 10, sort = 'id', direction = 'ASC' } = params
+    return api.get(`/products?page=${page}&size=${size}&sort=${sort}&direction=${direction}`)
   },
 
   // 根据ID获取商品详情
@@ -31,8 +32,17 @@ export const productAPI = {
   },
 
   // 搜索商品
-  searchProducts: (query) => {
-    return api.get(`/products/search?q=${query}`)
+  searchProducts: (params = {}) => {
+    const { keyword, category, page = 0, size = 10 } = params
+    let url = `/products/search?page=${page}&size=${size}`
+    if (keyword) url += `&keyword=${encodeURIComponent(keyword)}`
+    if (category) url += `&category=${encodeURIComponent(category)}`
+    return api.get(url)
+  },
+
+  // 获取商品分类
+  getCategories: () => {
+    return api.get('/products/categories')
   }
 }
 
@@ -50,7 +60,7 @@ export const cartAPI = {
 
   // 更新购物车商品数量
   updateCartItem: (itemId, quantity) => {
-    return api.put(`/cart/items/${itemId}`, { quantity })
+    return api.put(`/cart/items/${itemId}?quantity=${quantity}`)
   },
 
   // 从购物车删除商品
@@ -60,15 +70,21 @@ export const cartAPI = {
 
   // 清空购物车
   clearCart: () => {
-    return api.delete('/cart')
+    return api.delete('/cart/clear')
+  },
+
+  // 获取购物车统计信息
+  getCartSummary: () => {
+    return api.get('/cart/summary')
   }
 }
 
 // 订单相关API
 export const orderAPI = {
-  // 获取用户订单列表
-  getOrders: () => {
-    return api.get('/orders')
+  // 获取我的订单列表
+  getMyOrders: (params = {}) => {
+    const { page = 0, size = 10 } = params
+    return api.get(`/orders/my?page=${page}&size=${size}`)
   },
 
   // 创建订单
@@ -79,5 +95,10 @@ export const orderAPI = {
   // 根据ID获取订单详情
   getOrderById: (id) => {
     return api.get(`/orders/${id}`)
+  },
+
+  // 取消订单
+  cancelOrder: (id) => {
+    return api.put(`/orders/${id}/cancel`)
   }
 }
