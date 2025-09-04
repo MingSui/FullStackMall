@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  # MySQL数据库
+  mysql:
+    image: mysql:8.0
+    container_name: fullstackmall-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: fullstackmall
+      MYSQL_USER: mall_user
+      MYSQL_PASSWORD: mall_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - mall-network
+
+  # Spring Boot后端
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: fullstackmall-backend
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/fullstackmall
+      SPRING_DATASOURCE_USERNAME: mall_user
+      SPRING_DATASOURCE_PASSWORD: mall_password
+    depends_on:
+      - mysql
+    networks:
+      - mall-network
+
+  # React前端
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: fullstackmall-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - mall-network
+
+volumes:
+  mysql_data:
+
+networks:
+  mall-network:
+    driver: bridge
