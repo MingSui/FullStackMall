@@ -2,18 +2,16 @@ package com.fullstackmall.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.annotation.Order;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
 /**
- * Spring Security配置类
+ * Spring Security配置类 - 全部放行模式（内网测试）
  */
 @Configuration
 @EnableWebSecurity
@@ -42,7 +40,7 @@ public class SecurityConfig {
     }
 
     /**
-     * 安全过滤器链配置
+     * 安全过滤器链配置 - 全部放行（内网测试）
      * 
      * @param http HttpSecurity
      * @return SecurityFilterChain
@@ -52,23 +50,13 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // OpenAPI和Swagger相关路径 - 必须放在最前面确保优先匹配
-                        .requestMatchers("/v3/api-docs", "/v3/api-docs/**").permitAll()
-                        .requestMatchers("/swagger-ui/**", "/swagger-ui.html").permitAll()
-                        .requestMatchers("/swagger-resources/**").permitAll()
-                        .requestMatchers("/webjars/**").permitAll()
-                        .requestMatchers("/favicon.ico", "/error").permitAll()
-                        // 公开的端点（无需认证）
-                        .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers("/actuator/**").permitAll()
-                        .requestMatchers("/health", "/health/**").permitAll()
-                        // 静态资源
-                        .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
-                        .requestMatchers("/").permitAll()
-                        // 所有其他请求需要认证
-                        .anyRequest().authenticated());
+                        // API文档相关路径
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/doc.html",
+                                "/webjars/**")
+                        .permitAll()
+                        .anyRequest().permitAll() // 全部放行
+                );
 
         return http.build();
     }
