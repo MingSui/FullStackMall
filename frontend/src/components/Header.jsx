@@ -1,13 +1,12 @@
 import { Link, useNavigate } from 'react-router-dom'
-import { useState } from 'react'
+import { useAuth } from '../contexts/AuthContext'
 
 const Header = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const { user, logout, isAuthenticated } = useAuth()
   const navigate = useNavigate()
 
   const handleLogout = () => {
-    localStorage.removeItem('token')
-    setIsLoggedIn(false)
+    logout()
     navigate('/')
   }
 
@@ -17,7 +16,7 @@ const Header = () => {
         <Link to="/" className="text-2xl font-bold text-primary">
           FullStack Mall
         </Link>
-        
+
         <div className="flex items-center space-x-6">
           <Link to="/products" className="text-gray-700 hover:text-primary">
             商品
@@ -25,13 +24,16 @@ const Header = () => {
           <Link to="/cart" className="text-gray-700 hover:text-primary">
             购物车
           </Link>
-          
-          {isLoggedIn ? (
+
+          {isAuthenticated() ? (
             <div className="flex items-center space-x-4">
+              <span className="text-gray-700">
+                欢迎, {user?.username || user?.email}
+              </span>
               <Link to="/profile" className="text-gray-700 hover:text-primary">
                 个人中心
               </Link>
-              <button 
+              <button
                 onClick={handleLogout}
                 className="btn-secondary"
               >

@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
+import { useAuth } from '../contexts/AuthContext'
 import { orderAPI } from '../services/apiService'
 
 const Profile = () => {
+  const { user, logout, isAuthenticated } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-  const [user, setUser] = useState(null)
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
   const [ordersLoading, setOrdersLoading] = useState(false)
@@ -15,16 +16,9 @@ const Profile = () => {
   const [totalPages, setTotalPages] = useState(0)
 
   useEffect(() => {
-    const token = localStorage.getItem('token')
-    if (!token) {
+    if (!isAuthenticated()) {
       navigate('/login', { state: { from: location } })
       return
-    }
-
-    // 从 localStorage 获取用户信息
-    const userStr = localStorage.getItem('user')
-    if (userStr) {
-      setUser(JSON.parse(userStr))
     }
 
     // 检查是否需要切换到订单页签
@@ -33,19 +27,19 @@ const Profile = () => {
     }
 
     setLoading(false)
-  }, [])
+  }, [isAuthenticated, navigate, location])
 
   useEffect(() => {
-    if (activeTab === 'orders') {
+    if (activeTab === 'orders' && isAuthenticated()) {
       fetchOrders(0)
     }
-  }, [activeTab])
+  }, [activeTab, isAuthenticated])
 
   const fetchOrders = async (page = 0) => {
     try {
       setOrdersLoading(true)
       const response = await orderAPI.getMyOrders({ page, size: 5 })
-      
+
       if (response.data.success) {
         const { content, totalPages } = response.data.data
         setOrders(content)
@@ -75,7 +69,7 @@ const Profile = () => {
 
     try {
       const response = await orderAPI.cancelOrder(orderId)
-      
+
       if (response.data.success) {
         alert('订单已取消')
         fetchOrders(currentPage)
@@ -93,9 +87,8 @@ const Profile = () => {
   }
 
   const handleLogout = () => {
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
-    navigate('/login')
+    logout()
+    navigate('/')
   }
 
   const getStatusColor = (status) => {
@@ -132,31 +125,48 @@ const Profile = () => {
     }
   }
 
+  // 格式化日期显示
+  const formatDate = (dateString) => {
+    if (!dateString) return '未知'
+    try {
+      const date = new Date(dateString)
+      if (isNaN(date.getTime())) {
+        return '未知'
+      }
+      return date.toLocaleDateString('zh-CN', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      })
+    } catch (error) {
+      console.error('日期格式化错误:', error)
+      return '未知'
+    }
+  }
+
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-8">个人中心</h1>
-      
+
       {/* 标签导航 */}
       <div className="mb-8">
         <div className="border-b border-gray-200">
           <nav className="-mb-px flex space-x-8">
             <button
               onClick={() => setActiveTab('profile')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'profile'
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'profile'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
             >
               个人信息
             </button>
             <button
               onClick={() => setActiveTab('orders')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'orders'
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'orders'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
             >
               订单历史
             </button>
@@ -176,16 +186,16 @@ const Profile = () => {
               <p className="text-gray-600 mb-4">{user.email}</p>
               <div className="space-y-2">
                 <p className="text-sm text-gray-500">角色: {user.role === 'ADMIN' ? '管理员' : '用户'}</p>
-                <p className="text-sm text-gray-500">注册时间: {new Date(user.createdAt).toLocaleDateString()}</p>
+                <p className="text-sm text-gray-500">注册时间: {formatDate(user.createdAt)}</p>
               </div>
               <div className="mt-6 space-y-2">
-                <button 
+                <button
                   onClick={() => setActiveTab('orders')}
                   className="btn-primary w-full"
                 >
                   查看订单
                 </button>
-                <button 
+                <button
                   onClick={handleLogout}
                   className="btn-secondary w-full"
                 >
@@ -194,7 +204,7 @@ const Profile = () => {
               </div>
             </div>
           </div>
-          
+
           <div className="lg:col-span-2">
             <div className="card">
               <h3 className="text-xl font-semibold mb-4">账户概览</h3>
@@ -216,7 +226,7 @@ const Profile = () => {
                   <div className="text-sm text-gray-600">进行中</div>
                 </div>
               </div>
-              
+
               <div className="mt-6">
                 <h4 className="font-semibold mb-3">快捷操作</h4>
                 <div className="grid grid-cols-2 gap-4">
@@ -239,7 +249,7 @@ const Profile = () => {
           {error && (
             <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
               {error}
-              <button 
+              <button
                 onClick={() => fetchOrders(currentPage)}
                 className="ml-4 text-sm underline"
               >
@@ -278,7 +288,7 @@ const Profile = () => {
                         {getStatusText(order.status)}
                       </span>
                     </div>
-                    
+
                     <div className="mb-4">
                       <h5 className="font-medium mb-2">商品列表:</h5>
                       <div className="space-y-2">
@@ -301,7 +311,7 @@ const Profile = () => {
                         ))}
                       </div>
                     </div>
-                    
+
                     <div className="border-t pt-4">
                       <div className="flex justify-between items-center">
                         <div>
@@ -313,14 +323,14 @@ const Profile = () => {
                           </div>
                         </div>
                         <div className="space-x-2">
-                          <Link 
+                          <Link
                             to={`/orders/${order.id}`}
                             className="btn-secondary text-sm"
                           >
                             查看详情
                           </Link>
                           {(order.status === 'PENDING' || order.status === 'CONFIRMED') && (
-                            <button 
+                            <button
                               onClick={() => cancelOrder(order.id)}
                               className="btn-outline text-sm text-red-600 border-red-600 hover:bg-red-50"
                             >
@@ -344,22 +354,21 @@ const Profile = () => {
                   >
                     上一页
                   </button>
-                  
+
                   {[...Array(totalPages)].map((_, index) => (
                     <button
                       key={index}
                       onClick={() => fetchOrders(index)}
                       disabled={ordersLoading}
-                      className={`px-4 py-2 border rounded disabled:cursor-not-allowed ${
-                        currentPage === index 
-                          ? 'bg-primary text-white' 
-                          : 'hover:bg-gray-50'
-                      }`}
+                      className={`px-4 py-2 border rounded disabled:cursor-not-allowed ${currentPage === index
+                        ? 'bg-primary text-white'
+                        : 'hover:bg-gray-50'
+                        }`}
                     >
                       {index + 1}
                     </button>
                   ))}
-                  
+
                   <button
                     onClick={() => fetchOrders(currentPage + 1)}
                     disabled={currentPage >= totalPages - 1 || ordersLoading}

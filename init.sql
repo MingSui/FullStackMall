@@ -1,3 +1,26 @@
+-- 数据库初始化脚本
+-- 设置正确的字符集以避免中文乱码
+
+-- 创建数据库（如果不存在）
+CREATE DATABASE IF NOT EXISTS fullstackmall 
+CHARACTER SET utf8mb4 
+COLLATE utf8mb4_unicode_ci;
+
+-- 使用数据库
+USE fullstackmall;
+
+-- 设置会话字符集
+SET NAMES utf8mb4;
+SET character_set_client = utf8mb4;
+SET character_set_connection = utf8mb4;
+SET character_set_database = utf8mb4;
+SET character_set_results = utf8mb4;
+SET character_set_server = utf8mb4;
+
+-- 显示字符集配置（用于验证）
+-- SHOW VARIABLES LIKE 'character_set_%';
+-- SHOW VARIABLES LIKE 'collation_%';
+
 -- 初始化 FullStackMall 数据库
 
 -- 创建用户表

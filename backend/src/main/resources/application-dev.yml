@@ -4,7 +4,7 @@ spring:
   
   # 数据源配置 - 开发环境
   datasource:
-    url: jdbc:mysql://127.0.0.1:3307/fullstackmall?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    url: jdbc:mysql://127.0.0.1:3307/fullstackmall?useUnicode=true&characterEncoding=UTF-8&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
     username: root
     password: 123456
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -40,6 +40,10 @@ server:
   port: 8080
   servlet:
     context-path: /api
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
   # 开发环境错误详情
   error:
     include-message: always

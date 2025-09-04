@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { useAuth } from '../contexts/AuthContext'
 import { authAPI } from '../services/apiService'
 
 const Login = () => {
@@ -9,6 +10,7 @@ const Login = () => {
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const { login } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const from = location.state?.from?.pathname || '/'
@@ -27,12 +29,13 @@ const Login = () => {
 
     try {
       const response = await authAPI.login(formData)
-      
+
       if (response.data.success) {
         const { token, user } = response.data.data
-        localStorage.setItem('token', token)
-        localStorage.setItem('user', JSON.stringify(user))
-        
+
+        // 使用AuthContext的login方法
+        login(token, user)
+
         // 跳转到之前访问的页面或首页
         navigate(from, { replace: true })
       } else {
@@ -62,7 +65,7 @@ const Login = () => {
       <div className="max-w-md mx-auto">
         <div className="card">
           <h2 className="text-2xl font-bold text-center mb-6">用户登录</h2>
-          
+
           {error && (
             <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
               {error}
@@ -107,7 +110,7 @@ const Login = () => {
 
           <div className="text-center">
             <p className="text-gray-600">
-              还没有账户？ 
+              还没有账户？
               <Link to="/register" className="text-primary hover:underline ml-1">
                 立即注册
               </Link>

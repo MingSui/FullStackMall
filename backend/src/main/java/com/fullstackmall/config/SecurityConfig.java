@@ -51,6 +51,8 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
+                        // 静态资源放行
+                        .requestMatchers("/images/**", "/static/**").permitAll()
                         // API文档相关路径
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/doc.html",
                                 "/webjars/**")
