@@ -1,10 +1,9 @@
-version: '3.8'
-
 services:
   # MySQL数据库
   mysql:
     image: mysql:8.0
     container_name: fullstackmall-mysql
+    restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: rootpassword
       MYSQL_DATABASE: fullstackmall
@@ -16,6 +15,10 @@ services:
       - mysql_data:/var/lib/mysql
     networks:
       - mall-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
 
   # Spring Boot后端
   backend:
@@ -23,16 +26,22 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: fullstackmall-backend
+    restart: unless-stopped
     ports:
       - "8080:8080"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/fullstackmall
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/fullstackmall?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: mall_user
       SPRING_DATASOURCE_PASSWORD: mall_password
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
     networks:
       - mall-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/api/actuator/health"]
+      timeout: 5s
+      retries: 5
 
   # React前端
   frontend:
@@ -40,10 +49,12 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: fullstackmall-frontend
+    restart: unless-stopped
     ports:
       - "80:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     networks:
       - mall-network
 

@@ -1,0 +1,81 @@
+# 设计文档目录
+.qoder/
+
+# 编译输出
+target/
+build/
+dist/
+
+# 依赖目录
+node_modules/
+
+# 环境配置
+.env
+.env.local
+
+# IDE文件
+.vscode/
+.idea/
+*.iml
+
+# 日志文件
+*.log
+
+# 数据库文件
+*.db
+*.sqlite
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# Docker卷数据
+mysql_data/
+
+# 临时文件
+*.tmp
+*.temp
+
+# 包管理锁文件
+package-lock.json
+yarn.lock
+
+# Java编译文件
+*.class
+
+# Maven
+.mvn/
+mvnw
+mvnw.cmd
+
+# Spring Boot
+*.jar
+*.war
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# IntelliJ IDEA
+.idea
+*.iws
+*.iml
+*.ipr
+
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+# VS Code
+.vscode/
+
+# 操作系统
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
